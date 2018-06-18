@@ -18,6 +18,8 @@ settings = {
     "debug": True, # Prints actions as they occur, in your console
     "headless": False, # Run browser headlessly
     "keyboard_traverse": False, # Tab/Enter clicking of buttons instead
+    "check_blacklist": False, # Check Google search page for unusual traffic 
+                              # text and close on true before solving
 
     "api_subkey": "", # API key for Azure Cognitive Services
     "pageurl": "https://google.com/recaptcha/api2/demo",   # ReCAPTCHA pageurl
@@ -33,7 +35,7 @@ settings = {
     "wait_timeout": {
         "load_timeout": 30,  # Seconds to wait for page to load
         "deface_timeout": 30,  # Seconds to wait for page to be defaced
-        "success_timeout": 5,  # Seconds to wait due to checkbox animation
+        "success_timeout": 10,  # Seconds to wait due to checkbox animation
         "audio_button_timeout": 10,  # Seconds to wait for audio button
         "audio_link_timeout": 10,  # Seconds to wait for the audio link,
                                    # not the download!

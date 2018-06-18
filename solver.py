@@ -11,7 +11,7 @@ import tempfile
 
 from pyppeteer import launch
 from pyppeteer.util import merge_dict
-from async_timeout import timeout
+from async_timeout import timeout as async_timeout
 
 import util
 from config import settings
@@ -43,7 +43,7 @@ class Solver(object):
     @property
     def debug(self):
         return self._debug
-        
+
     @property
     def headless(self):
         return self._headless
@@ -66,7 +66,7 @@ class Solver(object):
             if self._proxy_auth:
                 await self.page.authenticate(self._proxy_auth)
 
-            with timeout(120):
+            with async_timeout(120):
                 result = await self._solve()
         except Exception as e:
             result = None
@@ -85,8 +85,19 @@ class Solver(object):
 
         chrome_args = [
             "--no-sandbox",
-            "--disable-web-security"
+            "--disable-web-security",
+            '--cryptauth-http-host ""',
+            "--disable-affiliation-based-matching",
+            "--disable-answers-in-suggest",
+            "--disable-background-networking",
+            "--disable-breakpad",
+            "--disable-demo-mode",
+            "--disable-device-discovery-notifications",
+            "--disable-java",
+            "--disable-preconnect",
+            "--dns-prefetch-disable",
         ]
+
 
         if self._headless:
             aspect_ratio_list = ["3:2", "4:3", "5:3", "5:4", "16:9", "16:10"]
@@ -103,8 +114,11 @@ class Solver(object):
 
         if self._proxy:
             chrome_args.append(f"--proxy-server=http://{self._proxy}")
+        
+        args = self.options.pop("args")
+        args.extend(chrome_args)
 
-        self.options.update({"headless": self.headless, "args": chrome_args})
+        self.options.update({"headless": self.headless, "args": args})
         browser = await launch(self.options)
         return browser
 
@@ -187,6 +201,10 @@ class Solver(object):
         file
         """
 
+        if settings["check_blacklist"]:
+            if await self.is_blacklisted():
+                return
+
         try:
             await self._goto_and_deface()
         except:
@@ -215,7 +233,7 @@ class Solver(object):
             await self._check_detection(self.checkbox_frame, timeout * 1000)
         except:
             await self._click_audio_button()
-            if self.detected:
+            if self._detected:
                 return
             for i in range(5):
                 try:
@@ -223,7 +241,7 @@ class Solver(object):
                 except:
                     break
                 else:
-                    if self.detected:
+                    if self._detected:
                         break
                     if result:
                         code = await self.g_recaptcha_response()
@@ -326,11 +344,12 @@ class Solver(object):
                     "#recaptcha-reload-button"
                 )
                 await self.click_button(reload_button)
-                timeout = settings["wait_timeout"]["reload_timeout"]
                 func = (
-                        f'"{audio_url}" !== '
-                        f'{download_element}.getAttribute("href")'
-                    )
+                    f'"{audio_url}" !== '
+                    f'{download_element}.getAttribute("href")'
+                )
+                print(func)
+                timeout = settings["wait_timeout"]["reload_timeout"]
                 await self._check_detection(
                     self.image_frame, timeout * 1000, wants_true=func
                 )
@@ -364,16 +383,15 @@ class Solver(object):
             var elem_bot = %s;
             if(typeof elem_bot !== 'undefined'){
                 if(elem_bot.innerText === 'Try again later'){
-                    parent.wasdetected = true;
+                    window.wasdetected = true;
                     return true;
                 }
             }
 
             var elem_try = %s;
             if(typeof elem_try !== 'undefined'){
-                if(elem_try.innerText
-                    === 
-                   'Multiple correct solutions required - please solve more.'){
+                if(elem_try.innerText.indexOf('please solve more.') >= 0){
+                    alert('solve more!')
                     return true;
                 }
             }
@@ -395,13 +413,14 @@ class Solver(object):
                 print(e)
             raise Exception(f"Element non-existent {e}")
         else:
-            if await self.page.evaluate("typeof wasdetected !== 'undefined'"):
+            eval = "typeof wasdetected !== 'undefined'"
+            if await self.image_frame.evaluate(eval):
                 if self.debug:
                     print("We were detected")
                 self.detected = True
 
     async def click_button(self, button):
-        click_delay = random.uniform(200, 500)
+        click_delay = random.uniform(70, 130)
         wait_delay = random.uniform(2000, 4000)
         await asyncio.sleep(wait_delay / 1000)
         await button.click(delay=click_delay / 1000)
@@ -410,3 +429,21 @@ class Solver(object):
         func = 'document.getElementById("g-recaptcha-response").value'
         code = await self.page.evaluate(func)
         return code
+
+    async def is_blacklisted(self):
+        try:
+            timeout = settings["wait_timeout"]["load_timeout"]
+            url = "https://www.google.com/search?q=my+ip&hl=en"
+            response = await util.get_page(
+                url, proxy=self._proxy, timeout=timeout * 1000
+            )
+            detected_phrase = (
+                "Our systems have detected unusual traffic "
+                "from your computer"
+            )
+            if detected_phrase in response:
+                if self.debug:
+                    print("IP has been blacklisted by Google")
+                return True
+        except:
+            return
