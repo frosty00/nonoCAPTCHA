@@ -16,7 +16,7 @@ from nonocaptcha.image import SolveImage
 from nonocaptcha.launcher import Launcher
 from nonocaptcha import util
 from nonocaptcha.exceptions import (SafePassage, ButtonError, DefaceError,
-                                    PageError, nonocaptchaError)
+                                    PageError)
 
 
 class Solver(Base):
@@ -61,7 +61,7 @@ class Solver(Base):
             await self.goto()
             await self.deface()
             result = await self.solve()
-        except nonocaptchaError as e:
+        except BaseException as e:
             self.log(f"{e} {type(e)}")
         finally:
             try:
@@ -239,7 +239,7 @@ class Solver(Base):
 
     async def _solve(self):
         # Coming soon...
-        solve_image = False
+        solve_image = True
         if solve_image:
             self.image = SolveImage(
                 self.image_frame,
