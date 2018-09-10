@@ -6,6 +6,7 @@
 import asyncio
 import json
 import time
+import traceback
 
 from pyppeteer.util import merge_dict
 from user_agent import generate_navigator_js
@@ -63,6 +64,7 @@ class Solver(Base):
             await self.deface()
             result = await self.solve()
         except BaseException as e:
+            print(traceback.format_exc())
             self.log(f"{e} {type(e)}")
         finally:
             if isinstance(result, dict):
