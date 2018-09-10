@@ -47,6 +47,7 @@ class Solver(Base):
     async def start(self):
         """Begin solving"""
         start = time.time()
+        result = None
         try:
             self.browser = await self.get_new_browser()
             target = [t for t in self.browser.targets() if await t.page()][0]
@@ -64,12 +65,9 @@ class Solver(Base):
         except BaseException as e:
             self.log(f"{e} {type(e)}")
         finally:
-            try:
-                if isinstance(result, dict):
-                    status = result['status'].capitalize()
-                    self.log(f"Result: {status}")
-            except NameError:
-                result = None
+            if isinstance(result, dict):
+                status = result['status'].capitalize()
+                self.log(f"Result: {status}")
             end = time.time()
             elapsed = end - start
             await self.cleanup()
@@ -242,6 +240,7 @@ class Solver(Base):
         solve_image = True
         if solve_image:
             self.image = SolveImage(
+                self.browser,
                 self.image_frame,
                 self.proxy,
                 self.proxy_auth,
