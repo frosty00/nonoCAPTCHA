@@ -91,7 +91,6 @@ class SolveImage(Base):
             if isinstance(r, tuple) and r[1] is True:
                 correct_image_no = r[0]
 
-        await asyncio.sleep(100)
         return {'status': '?'}
 
     async def get_image_url(self):
@@ -123,6 +122,7 @@ class SolveImage(Base):
             print(best_guess)
         else:
             best_guess = ''
+        await asyncio.sleep(100)
         await page.close()
         return self.title in best_guess
 
