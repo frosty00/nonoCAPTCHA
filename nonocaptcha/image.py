@@ -110,7 +110,7 @@ class SolveImage(Base):
         )
 
     async def reverse_image_search(self, image_no):
-        image_path = f'{self.ip_address}/{image_no}.jpg'
+        image_path = f'{self.ip_address}:8080/{image_no}.jpg'
         url = self.url + image_path
         print(url, self.url)
         page = await self.browser.newPage()
@@ -129,5 +129,5 @@ class SolveImage(Base):
 
     def start_app(self):
         Handler.base_path = self.cur_image_path
-        httpd = HTTPServer(('localhost', 8080), Handler)
+        httpd = HTTPServer(('0.0.0.0', 8080), Handler)
         threading.Thread(target=httpd.serve_forever).start()
