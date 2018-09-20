@@ -28,7 +28,7 @@ class Handler(BaseHTTPRequestHandler):
 
 class SolveImage(Base):
     url = 'https://www.google.com/searchbyimage?site=search&sa=X&image_url='
-    ip_address = 'https://91.121.226.109'
+    ip_address = 'http://91.121.226.109'
 
     def __init__(self, browser, image_frame, proxy, proxy_auth, proc_id):
         self.browser = browser
