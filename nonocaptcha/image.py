@@ -112,6 +112,7 @@ class SolveImage(Base):
     async def reverse_image_search(self, image_no):
         image_path = f'{self.ip_address}/{image_no}.jpg'
         url = self.url + image_path
+        print(url, self.url)
         page = await self.browser.newPage()
         await page.goto(url)
         #contents = await page.content()
