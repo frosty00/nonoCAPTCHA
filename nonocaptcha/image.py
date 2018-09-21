@@ -112,11 +112,9 @@ class SolveImage(Base):
     async def reverse_image_search(self, image_no):
         image_path = f'{self.ip_address}:8080/{image_no}.jpg'
         url = self.url + image_path
-        print(url, self.url)
         page = await self.browser.newPage()
         await page.goto(url)
-        #contents = await page.content()
-        card = await page.querySelector('div.card-selection')
+        card = await page.querySelector('div.card-section')
         if card:
             best_guess = await page.evaluate('el => el.children[1].innerText',
                                              card)
