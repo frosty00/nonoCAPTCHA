@@ -77,6 +77,7 @@ class SolveImage(Base):
         pieces = 9  # TODO: crop other sizes
         image = await self.download_image()
         self.title = title
+        print(f'Image of {title}')
         self.pieces = pieces
         self.cur_image_path = os.path.join(PICTURES, f'{hash(image)}')
         os.mkdir(self.cur_image_path)
@@ -118,7 +119,7 @@ class SolveImage(Base):
         if card:
             best_guess = await page.evaluate('el => el.children[1].innerText',
                                              card)
-            print(best_guess)
+            print(image_no, best_guess)
         else:
             best_guess = ''
         await asyncio.sleep(100)
