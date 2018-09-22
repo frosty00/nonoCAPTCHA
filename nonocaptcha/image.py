@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-""" ***IN TESTING*** """
+""" Can only be run if external ip is accessable """
 
 import os
 import asyncio
@@ -12,6 +12,8 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from nonocaptcha import util
 from nonocaptcha.base import Base, settings
 from nonocaptcha import package_dir
+
+import ipgetter
 
 PICTURES = os.path.join(package_dir, settings['data']['pictures'])
 
@@ -28,7 +30,8 @@ class Handler(BaseHTTPRequestHandler):
 
 class SolveImage(Base):
     url = 'https://www.google.com/searchbyimage?site=search&sa=X&image_url='
-    ip_address = 'http://91.121.226.109'
+    ip_address = f'http://{ipgetter.myip()}'
+    banned_titles = ['fire hydrant']
 
     def __init__(self, browser, image_frame, proxy, proxy_auth, proc_id):
         self.browser = browser
@@ -70,14 +73,15 @@ class SolveImage(Base):
     async def cycle_to_solvable(self):
         while not await self.is_solvable() or await self.image_no() != 9:
             await self.click_reload_button()
+            self.title = await self.pictures_of()
+            if self.title.lower() in self.banned_titles:
+                continue
 
     async def solve_by_image(self):
         await self.cycle_to_solvable()
-        title = await self.pictures_of()
         pieces = 9  # TODO: crop other sizes
         image = await self.download_image()
-        self.title = title
-        print(f'Image of {title}')
+        print(f'Image of {self.title}')
         self.pieces = pieces
         self.cur_image_path = os.path.join(PICTURES, f'{hash(image)}')
         os.mkdir(self.cur_image_path)
@@ -88,11 +92,13 @@ class SolveImage(Base):
         self.start_app()
         queries = [self.reverse_image_search(i) for i in range(pieces)]
         results = await asyncio.gather(*queries, return_exceptions=True)
+        correct_images = []
         for r in results:
             if isinstance(r, tuple) and r[1] is True:
-                pass
+                pic_to_click_index = r[0]
+                correct_images.append(pic_to_click_index)
                 # TODO: return a list of numbers corresponding to image index
-
+        print(correct_images)
         return {'status': '?'}
 
     async def get_image_url(self):
